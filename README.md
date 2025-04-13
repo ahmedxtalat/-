@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>تتبع الدخل اليومي</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
       font-family: 'Tahoma', sans-serif;
@@ -86,7 +87,7 @@
     <h1>تتبع الدخل اليومي</h1>
   </header>
   <div>
-    <button onclick="exportToHTML()">تصدير إلى PDF</button>
+    <button onclick="exportPDF()">تصدير إلى PDF</button>
     <button onclick="toggleArchive()">عرض/إخفاء سجل الأرشيف</button>
   </div>
   <div id="entries"></div>
@@ -196,16 +197,16 @@
       renderArchive();
     }
 
-    function exportToHTML() {
-      let html = `<html dir="rtl"><head><meta charset="UTF-8"><title>تقرير اليوم</title></head><body>`;
-      html += `<h2>تقرير يوم ${getTodayDate()}</h2><ul>`;
-      entries.forEach(e => {
-        html += `<li>${e.price} جنيه - جهاز ${e.device} - ${e.time}</li>`;
-      });
-      html += `</ul><script>window.print();</script></body></html>`;
-      const win = window.open();
-      win.document.write(html);
-      win.document.close();
+    function exportPDF() {
+      const element = document.getElementById("entries");
+      const opt = {
+        margin:       0.5,
+        filename:     `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().from(element).set(opt).save();
     }
 
     archiveOldEntries();

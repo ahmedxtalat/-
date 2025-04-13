@@ -86,7 +86,7 @@
     <h1>تتبع الدخل اليومي</h1>
   </header>
   <div>
-    <button onclick="exportPDF()">تصدير إلى PDF</button>
+    <button onclick="openInBrowser()">تصدير إلى PDF (افتح في المتصفح)</button>
     <button onclick="toggleArchive()">عرض/إخفاء سجل الأرشيف</button>
   </div>
   <div id="entries"></div>
@@ -206,6 +206,10 @@
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
       html2pdf().from(element).set(opt).save();
+    }
+
+    function openInBrowser() {
+      window.location.href = "appcreator24://openExternal?url=" + encodeURIComponent(window.location.href);
     }
 
     archiveOldEntries();

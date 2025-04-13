@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تتبع الدخل اليومي</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
@@ -21,17 +22,29 @@
       justify-content: space-between;
       flex-wrap: wrap;
     }
-    header .info-block {
-      text-align: right;
-    }
     header img {
-      height: 50px;
-      margin-left: 10px;
+      height: 40px;
+      margin: 5px;
     }
     h1 {
-      margin: 5px 0;
+      font-size: 20px;
+      margin: 5px;
       flex: 1;
       text-align: center;
+    }
+    header .info-block {
+      font-size: 14px;
+      text-align: right;
+      margin: 5px;
+    }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        text-align: center;
+      }
+      header .info-block {
+        text-align: center;
+      }
     }
     #entries, #archiveDisplay {
       margin: 10px;
@@ -42,19 +55,20 @@
     }
     .entry, .archive-entry {
       background: #e8f0fe;
-      margin: 5px;
+      margin: 5px 0;
       padding: 10px;
       border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      font-size: 14px;
     }
     button, .fab {
       margin: 5px;
-      padding: 10px 20px;
+      padding: 10px 15px;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 14px;
       cursor: pointer;
     }
     .fab {
@@ -64,10 +78,10 @@
       transform: translateX(50%);
       background-color: #28a745;
       color: white;
-      font-size: 40px;
+      font-size: 30px;
       border-radius: 50%;
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -81,6 +95,7 @@
       cursor: pointer;
       color: #007bff;
       margin: 5px;
+      font-size: 15px;
     }
     .archive-day:hover {
       text-decoration: underline;
@@ -91,18 +106,17 @@
   <header>
     <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار">
     <h1>تتبع الدخل اليومي</h1>
-    <div class="info-block" id="summaryInfo"></div>
+    <div class="info-block" id="headerInfo"></div>
   </header>
 
   <div>
-    <button onclick="exportPDF()">تصدير إلى PDF</button>
-    <button onclick="exportArchivePDF()">تصدير الأرشيف إلى PDF</button>
+    <button onclick="exportPDF()">تصدير اليوم إلى PDF</button>
+    <button onclick="exportArchivePDF()">تصدير الأرشيف</button>
     <button onclick="toggleArchive()">عرض/إخفاء سجل الأرشيف</button>
   </div>
 
   <div id="entries"></div>
   <div id="archiveDisplay" style="display:none;"></div>
-  <div id="pdfArchiveContent" style="display:none;"></div>
   <button class="fab" onclick="showAddEntryPrompt()">+</button>
 
   <script>
@@ -142,16 +156,11 @@
         container.appendChild(div);
       });
 
-      updateHeaderSummary();
-    }
-
-    function updateHeaderSummary() {
       const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
-      const count = entries.length;
-      document.getElementById("summaryInfo").innerHTML = `
-        <p>${getTodayDate()}</p>
-        <p>إجمالي اليوم: ${total} جنيه</p>
-        <p>عدد العمليات: ${count}</p>
+      document.getElementById("headerInfo").innerHTML = `
+        <div>اليوم: ${getTodayDate().split(' ')[0]}</div>
+        <div>الإجمالي: ${total} جنيه</div>
+        <div>عدد العمليات: ${entries.length}</div>
       `;
     }
 
@@ -201,7 +210,6 @@
         div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
         container.appendChild(div);
       });
-
       const del = document.createElement("button");
       del.textContent = "حذف هذا اليوم";
       del.className = "delete-btn";
@@ -222,7 +230,12 @@
     }
 
     function exportPDF() {
-      const element = document.getElementById("entries");
+      const content = document.createElement("div");
+      content.innerHTML = `
+        <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" style="height:40px;">
+        <h3>${getTodayDate()}</h3>
+        ${entries.map(e => `<div>${e.price} جنيه - جهاز ${e.device} - ${e.time}</div>`).join("")}
+      `;
       const opt = {
         margin: 0.5,
         filename: `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
@@ -230,50 +243,24 @@
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
-      html2pdf().from(element).set(opt).save();
+      html2pdf().from(content).set(opt).save();
     }
 
     function exportArchivePDF() {
-      const pdfContent = document.getElementById("pdfArchiveContent");
-      pdfContent.innerHTML = "";
-
-      const logo = document.createElement("img");
-      logo.src = "https://www2.0zz0.com/2025/04/05/13/377189202.png";
-      logo.style.height = "60px";
-      pdfContent.appendChild(logo);
-
-      const title = document.createElement("h2");
-      title.textContent = "سجل الأرشيف الكامل";
-      pdfContent.appendChild(title);
-
+      const content = document.createElement("div");
+      content.innerHTML = `<img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" style="height:40px;"><h2>سجل الأرشيف</h2>`;
       for (const day in archive) {
-        const dayTitle = document.createElement("h3");
-        dayTitle.textContent = day;
-        pdfContent.appendChild(dayTitle);
-
-        const entriesList = document.createElement("ul");
-        archive[day].forEach(e => {
-          const li = document.createElement("li");
-          li.textContent = `${e.price} جنيه - جهاز ${e.device} - ${e.time}`;
-          entriesList.appendChild(li);
-        });
-        pdfContent.appendChild(entriesList);
-
-        const total = archive[day].reduce((sum, e) => sum + Number(e.price), 0);
-        const totalLine = document.createElement("p");
-        totalLine.innerHTML = `<strong>الإجمالي:</strong> ${total} جنيه`;
-        pdfContent.appendChild(totalLine);
+        content.innerHTML += `<h3>${day}</h3>`;
+        content.innerHTML += archive[day].map(e => `<div>${e.price} جنيه - جهاز ${e.device} - ${e.time}</div>`).join("");
       }
-
       const opt = {
         margin: 0.5,
-        filename: 'سجل_الأرشيف.pdf',
+        filename: `أرشيف_الدخل.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
-
-      html2pdf().from(pdfContent).set(opt).save();
+      html2pdf().from(content).set(opt).save();
     }
 
     archiveOldEntries();

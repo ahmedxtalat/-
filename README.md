@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -14,17 +15,23 @@
     header {
       background-color: #4a90e2;
       color: white;
-      padding: 10px 0;
-      position: relative;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    header .info-block {
+      text-align: right;
     }
     header img {
-      height: 40px;
-      position: absolute;
-      left: 10px;
-      top: 10px;
+      height: 50px;
+      margin-left: 10px;
     }
     h1 {
-      margin: 0;
+      margin: 5px 0;
+      flex: 1;
+      text-align: center;
     }
     #entries, #archiveDisplay {
       margin: 10px;
@@ -84,13 +91,18 @@
   <header>
     <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار">
     <h1>تتبع الدخل اليومي</h1>
+    <div class="info-block" id="summaryInfo"></div>
   </header>
+
   <div>
-    <button onclick="openInBrowser()">تصدير إلى PDF (افتح في المتصفح)</button>
+    <button onclick="exportPDF()">تصدير إلى PDF</button>
+    <button onclick="exportArchivePDF()">تصدير الأرشيف إلى PDF</button>
     <button onclick="toggleArchive()">عرض/إخفاء سجل الأرشيف</button>
   </div>
+
   <div id="entries"></div>
   <div id="archiveDisplay" style="display:none;"></div>
+  <div id="pdfArchiveContent" style="display:none;"></div>
   <button class="fab" onclick="showAddEntryPrompt()">+</button>
 
   <script>
@@ -129,6 +141,18 @@
                           <button class='delete-btn' onclick='deleteEntry(${index})'>حذف</button>`;
         container.appendChild(div);
       });
+
+      updateHeaderSummary();
+    }
+
+    function updateHeaderSummary() {
+      const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
+      const count = entries.length;
+      document.getElementById("summaryInfo").innerHTML = `
+        <p>${getTodayDate()}</p>
+        <p>إجمالي اليوم: ${total} جنيه</p>
+        <p>عدد العمليات: ${count}</p>
+      `;
     }
 
     function deleteEntry(index) {
@@ -171,12 +195,13 @@
     function showArchiveDetails(day) {
       const container = document.getElementById("entries");
       container.innerHTML = `<h3>${day}</h3>`;
-      archive[day].forEach((entry, index) => {
+      archive[day].forEach((entry) => {
         const div = document.createElement("div");
         div.className = "entry";
         div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
         container.appendChild(div);
       });
+
       const del = document.createElement("button");
       del.textContent = "حذف هذا اليوم";
       del.className = "delete-btn";
@@ -199,17 +224,56 @@
     function exportPDF() {
       const element = document.getElementById("entries");
       const opt = {
-        margin:       0.5,
-        filename:     `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        margin: 0.5,
+        filename: `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
       };
       html2pdf().from(element).set(opt).save();
     }
 
-    function openInBrowser() {
-      window.location.href = "appcreator24://openExternal?url=" + encodeURIComponent(window.location.href);
+    function exportArchivePDF() {
+      const pdfContent = document.getElementById("pdfArchiveContent");
+      pdfContent.innerHTML = "";
+
+      const logo = document.createElement("img");
+      logo.src = "https://www2.0zz0.com/2025/04/05/13/377189202.png";
+      logo.style.height = "60px";
+      pdfContent.appendChild(logo);
+
+      const title = document.createElement("h2");
+      title.textContent = "سجل الأرشيف الكامل";
+      pdfContent.appendChild(title);
+
+      for (const day in archive) {
+        const dayTitle = document.createElement("h3");
+        dayTitle.textContent = day;
+        pdfContent.appendChild(dayTitle);
+
+        const entriesList = document.createElement("ul");
+        archive[day].forEach(e => {
+          const li = document.createElement("li");
+          li.textContent = `${e.price} جنيه - جهاز ${e.device} - ${e.time}`;
+          entriesList.appendChild(li);
+        });
+        pdfContent.appendChild(entriesList);
+
+        const total = archive[day].reduce((sum, e) => sum + Number(e.price), 0);
+        const totalLine = document.createElement("p");
+        totalLine.innerHTML = `<strong>الإجمالي:</strong> ${total} جنيه`;
+        pdfContent.appendChild(totalLine);
+      }
+
+      const opt = {
+        margin: 0.5,
+        filename: 'سجل_الأرشيف.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().from(pdfContent).set(opt).save();
     }
 
     archiveOldEntries();

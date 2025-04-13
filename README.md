@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تتبع الدخل اليومي</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
@@ -18,33 +18,26 @@
       color: white;
       padding: 10px;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     header img {
       height: 40px;
-      margin: 5px;
+    }
+    .header-info {
+      text-align: right;
+      font-size: 14px;
     }
     h1 {
       font-size: 20px;
-      margin: 5px;
-      flex: 1;
-      text-align: center;
-    }
-    header .info-block {
-      font-size: 14px;
-      text-align: right;
-      margin: 5px;
-    }
-    @media (max-width: 600px) {
-      header {
-        flex-direction: column;
-        text-align: center;
-      }
-      header .info-block {
-        text-align: center;
-      }
+      margin: 5px 0;
+      flex: 1 1 100%;
     }
     #entries, #archiveDisplay {
       margin: 10px;
@@ -61,14 +54,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 14px;
+      flex-wrap: wrap;
     }
     button, .fab {
       margin: 5px;
-      padding: 10px 15px;
+      padding: 10px 20px;
       border: none;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 16px;
       cursor: pointer;
     }
     .fab {
@@ -78,10 +71,10 @@
       transform: translateX(50%);
       background-color: #28a745;
       color: white;
-      font-size: 30px;
+      font-size: 40px;
       border-radius: 50%;
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -95,7 +88,6 @@
       cursor: pointer;
       color: #007bff;
       margin: 5px;
-      font-size: 15px;
     }
     .archive-day:hover {
       text-decoration: underline;
@@ -104,14 +96,20 @@
 </head>
 <body>
   <header>
-    <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار">
+    <div class="logo-container">
+      <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار">
+      <div class="header-info">
+        <div id="todayDate"></div>
+        <div id="entryCount"></div>
+        <div id="totalEarnings"></div>
+      </div>
+    </div>
     <h1>تتبع الدخل اليومي</h1>
-    <div class="info-block" id="headerInfo"></div>
   </header>
 
   <div>
     <button onclick="exportPDF()">تصدير اليوم إلى PDF</button>
-    <button onclick="exportArchivePDF()">تصدير الأرشيف</button>
+    <button onclick="exportArchivePDF()">تصدير الأرشيف إلى PDF</button>
     <button onclick="toggleArchive()">عرض/إخفاء سجل الأرشيف</button>
   </div>
 
@@ -131,7 +129,16 @@
     function getTodayDate() {
       const now = new Date();
       now.setHours(now.getHours() - 6);
-      return now.toLocaleDateString("ar-EG", { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
+      return now.toLocaleDateString("ar-EG", {
+        weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
+      });
+    }
+
+    function updateHeaderInfo() {
+      document.getElementById("todayDate").textContent = getTodayDate();
+      document.getElementById("entryCount").textContent = `عدد العمليات: ${entries.length}`;
+      const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
+      document.getElementById("totalEarnings").textContent = `إجمالي الأرباح: ${total} جنيه`;
     }
 
     function showAddEntryPrompt() {
@@ -155,13 +162,7 @@
                           <button class='delete-btn' onclick='deleteEntry(${index})'>حذف</button>`;
         container.appendChild(div);
       });
-
-      const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
-      document.getElementById("headerInfo").innerHTML = `
-        <div>اليوم: ${getTodayDate().split(' ')[0]}</div>
-        <div>الإجمالي: ${total} جنيه</div>
-        <div>عدد العمليات: ${entries.length}</div>
-      `;
+      updateHeaderInfo();
     }
 
     function deleteEntry(index) {
@@ -230,37 +231,57 @@
     }
 
     function exportPDF() {
-      const content = document.createElement("div");
-      content.innerHTML = `
-        <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" style="height:40px;">
-        <h3>${getTodayDate()}</h3>
-        ${entries.map(e => `<div>${e.price} جنيه - جهاز ${e.device} - ${e.time}</div>`).join("")}
-      `;
-      const opt = {
+      const element = document.getElementById("entries");
+      const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
+      const totalDiv = document.createElement("div");
+      totalDiv.style.marginTop = "20px";
+      totalDiv.style.fontSize = "18px";
+      totalDiv.style.fontWeight = "bold";
+      totalDiv.textContent = `إجمالي أرباح اليوم: ${total} جنيه`;
+      element.appendChild(totalDiv);
+
+      html2pdf().from(element).set({
         margin: 0.5,
         filename: `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-      html2pdf().from(content).set(opt).save();
+      }).save().then(() => totalDiv.remove());
     }
 
     function exportArchivePDF() {
-      const content = document.createElement("div");
-      content.innerHTML = `<img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" style="height:40px;"><h2>سجل الأرشيف</h2>`;
+      const element = document.createElement("div");
+      element.innerHTML = "<h3>سجل الأرشيف</h3>";
+      let archiveTotal = 0;
+
       for (const day in archive) {
-        content.innerHTML += `<h3>${day}</h3>`;
-        content.innerHTML += archive[day].map(e => `<div>${e.price} جنيه - جهاز ${e.device} - ${e.time}</div>`).join("");
+        const total = archive[day].reduce((sum, e) => sum + Number(e.price), 0);
+        archiveTotal += total;
+        const div = document.createElement("div");
+        div.innerHTML = `<strong>${day}</strong><br>الإجمالي: ${total} جنيه`;
+        archive[day].forEach(entry => {
+          const item = document.createElement("div");
+          item.textContent = `${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}`;
+          div.appendChild(item);
+        });
+        element.appendChild(div);
+        element.appendChild(document.createElement("hr"));
       }
-      const opt = {
+
+      const totalDiv = document.createElement("div");
+      totalDiv.style.marginTop = "20px";
+      totalDiv.style.fontSize = "18px";
+      totalDiv.style.fontWeight = "bold";
+      totalDiv.textContent = `إجمالي أرباح الأرشيف: ${archiveTotal} جنيه`;
+      element.appendChild(totalDiv);
+
+      html2pdf().from(element).set({
         margin: 0.5,
         filename: `أرشيف_الدخل.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-      html2pdf().from(content).set(opt).save();
+      }).save();
     }
 
     archiveOldEntries();

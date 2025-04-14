@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>تتبع الدخل اليومي</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     body {
       font-family: 'Tahoma', sans-serif;
@@ -108,8 +107,8 @@
   </header>
 
   <div>
-    <button onclick="exportPDF()">تصدير اليوم إلى PDF</button>
-    <button onclick="exportArchivePDF()">تصدير الأرشيف إلى PDF</button>
+    <button onclick="window.open('export-today.html', '_blank')">تصدير اليوم إلى PDF</button>
+    <button onclick="window.open('export-archive.html', '_blank')">تصدير الأرشيف إلى PDF</button>
     <button onclick="toggleArchive()">عرض/إخفاء سجل الأرشيف</button>
   </div>
 
@@ -228,60 +227,6 @@
       saveEntries();
       updateDisplay();
       renderArchive();
-    }
-
-    function exportPDF() {
-      const element = document.getElementById("entries");
-      const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
-      const totalDiv = document.createElement("div");
-      totalDiv.style.marginTop = "20px";
-      totalDiv.style.fontSize = "18px";
-      totalDiv.style.fontWeight = "bold";
-      totalDiv.textContent = `إجمالي أرباح اليوم: ${total} جنيه`;
-      element.appendChild(totalDiv);
-
-      html2pdf().from(element).set({
-        margin: 0.5,
-        filename: `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      }).save().then(() => totalDiv.remove());
-    }
-
-    function exportArchivePDF() {
-      const element = document.createElement("div");
-      element.innerHTML = "<h3>سجل الأرشيف</h3>";
-      let archiveTotal = 0;
-
-      for (const day in archive) {
-        const total = archive[day].reduce((sum, e) => sum + Number(e.price), 0);
-        archiveTotal += total;
-        const div = document.createElement("div");
-        div.innerHTML = `<strong>${day}</strong><br>الإجمالي: ${total} جنيه`;
-        archive[day].forEach(entry => {
-          const item = document.createElement("div");
-          item.textContent = `${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}`;
-          div.appendChild(item);
-        });
-        element.appendChild(div);
-        element.appendChild(document.createElement("hr"));
-      }
-
-      const totalDiv = document.createElement("div");
-      totalDiv.style.marginTop = "20px";
-      totalDiv.style.fontSize = "18px";
-      totalDiv.style.fontWeight = "bold";
-      totalDiv.textContent = `إجمالي أرباح الأرشيف: ${archiveTotal} جنيه`;
-      element.appendChild(totalDiv);
-
-      html2pdf().from(element).set({
-        margin: 0.5,
-        filename: `أرشيف_الدخل.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      }).save();
     }
 
     archiveOldEntries();
